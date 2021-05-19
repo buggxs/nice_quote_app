@@ -1,8 +1,13 @@
 import React, { Component } from 'react';
 import { Alert, StyleSheet, Platform, SafeAreaView, View, Text, Button } from 'react-native';
+import * as SQLite from 'expo-sqlite';
 
 import Quote from './js/components/Quote';
 import NewQuote from './js/components/NewQuote';
+
+
+const database = SQLite.openDatabase('quotes.db');
+
 
 
 export default class App extends Component {
@@ -10,24 +15,43 @@ export default class App extends Component {
 
 
   _loadData = async () => {
-    
+    database.transaction(
+      transaction => transaction.executeSql(
+        'SELECT * FROM quotes', 
+        [], 
+        (_, result) => this.setState({quotes: result.rows._array})
+        )
+    );
   }
 
 
-  _storeData(quotes) {
-      
+  _saveQuoteToDB = (text, author, quotes) => {
+    database.transaction(
+      transaction => transaction.executeSql(
+        'INSERT INTO quotes (text, author) VALUES (?, ?)', 
+        [text, author], 
+        (_, result) => quotes[quotes.length - 1].id = result.insertId
+      )
+    );
+  }
+
+
+  _deleteQuoteFromDB = (id) => {
+    database.transaction(
+      transaction => transaction.executeSql(
+        'DELETE FROM quotes WHERE id = ?', 
+        [id]
+      )
+    );
   }
 
 
   _addQuote = (text, author) => {
-    // TODO: neues Zitat in der Datenbank abspeichern
-
     let { quotes } = this.state;
     if(text && author){
       quotes.push({ text, author });
-      this._storeData(quotes);
+      this._saveQuoteToDB(text, author, quotes);
     } 
-
     this.setState({ index: quotes.length-1, showNewQuoteScreen: false, quotes: quotes });
   }
 
@@ -46,8 +70,8 @@ export default class App extends Component {
   _deleteQuote = () => {
     // TODO: Zitat aus der Datenbank löschen
     let { index, quotes } = this.state;
+    this._deleteQuoteFromDB(quotes[index].id);
     quotes.splice(index, 1);
-    this._storeData(quotes);
     this.setState({ index: 0, quotes: quotes });
   }
 
@@ -69,6 +93,12 @@ export default class App extends Component {
 
 
   componentDidMount() {
+    /*
+CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY NOT NULL, text TEXT, author TEXT);
+*/
+    database.transaction(
+      transaction => transaction.executeSql("CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY NOT NULL, text TEXT, author TEXT);")
+    );
     this._loadData();
   }
 
