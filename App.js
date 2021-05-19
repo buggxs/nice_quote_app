@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, Platform, SafeAreaView, View, Button } from 'react-native';
+import { Alert, StyleSheet, Platform, SafeAreaView, View, Text, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Quote from './js/components/Quote';
@@ -26,7 +26,6 @@ export default class App extends Component {
 
   _addQuote = (text, author) => {
     let { quotes } = this.state;
-
     if(text && author){
       quotes.push({ text, author });
       this._storeData(quotes);
@@ -36,7 +35,18 @@ export default class App extends Component {
   }
 
 
-  _addQuote = () => {
+  _deleteButton = () => {
+    Alert.alert(
+      'Zitat löschen?', 
+      'Das Zitat wird unwiederruflich gelöscht.', 
+      [
+        {text: 'HALT, abbrechen..', style: 'cancel'},
+        {text: 'Ja, weg damit!', style: 'destructive', onPress: this._deleteQuote}
+      ]);
+  }
+
+
+  _deleteQuote = () => {
     let { index, quotes } = this.state;
     quotes.splice(index, 1);
     this._storeData(quotes);
@@ -55,7 +65,7 @@ export default class App extends Component {
   _displayPrevQuote = () => {
     let { index, quotes } = this.state;
     let prevIndex = index - 1;
-    if (prevIndex <= 0) prevIndex = quotes.length - 1;
+    if (prevIndex < 0) prevIndex = quotes.length - 1;
     this.setState({index: prevIndex})
   }
 
@@ -72,9 +82,9 @@ export default class App extends Component {
     return (
       <SafeAreaView style={styles.container}>
         
-        <StyledButton style={styles.deleteQuoteButton} title="Löschen" onPress={ this._deleteQuote } />
+        <StyledButton style={styles.deleteQuoteButton} title="Löschen" onPress={ this._deleteButton } visible={quote !== undefined} />
 
-        <StyledButton style={styles.newQuoteButton} title="Neu" onPress={() => this.setState({showNewQuoteScreen: true})} />
+        <StyledButton style={styles.newQuoteButton} title="Neu" onPress={() => this.setState({showNewQuoteScreen: true})} visible={true} />
 
         <NewQuote visible={this.state.showNewQuoteScreen} onSave={ this._addQuote }/>
           
@@ -84,9 +94,9 @@ export default class App extends Component {
             <Quote text={quote.text} author={quote.author} />
         )}
         
-        <StyledButton style={styles.nextQuoteButton} title="Nächstes Zitat" onPress={ this._displayNextQuote } />
+        <StyledButton style={styles.nextQuoteButton} title="Nächstes Zitat" onPress={ this._displayNextQuote } visible={quotes.length > 1} />
 
-        <StyledButton style={styles.prevQuoteButton} title="Vorheriges Zitat" onPress={ this._displayPrevQuote } />
+        <StyledButton style={styles.prevQuoteButton} title="Vorheriges Zitat" onPress={ this._displayPrevQuote } visible={quotes.length > 1} />
 
       </SafeAreaView>
     );
@@ -95,6 +105,9 @@ export default class App extends Component {
 
 
 function StyledButton(props) {
+  if(!props.visible) {
+    return null;
+  }
   return (
     <View style={props.style}>
       <Button 
