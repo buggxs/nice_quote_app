@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Alert, StyleSheet, Platform, SafeAreaView, View, Text, Button } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Quote from './js/components/Quote';
 import NewQuote from './js/components/NewQuote';
@@ -11,20 +10,18 @@ export default class App extends Component {
 
 
   _loadData = async () => {
-    let value = await AsyncStorage.getItem('QUOTES');
-    if(value != null) {
-      value = JSON.parse(value);
-      this.setState({quotes: value});
-    }
+    
   }
 
 
   _storeData(quotes) {
-      AsyncStorage.setItem('QUOTES', JSON.stringify(quotes));
+      
   }
 
 
   _addQuote = (text, author) => {
+    // TODO: neues Zitat in der Datenbank abspeichern
+
     let { quotes } = this.state;
     if(text && author){
       quotes.push({ text, author });
@@ -47,6 +44,7 @@ export default class App extends Component {
 
 
   _deleteQuote = () => {
+    // TODO: Zitat aus der Datenbank löschen
     let { index, quotes } = this.state;
     quotes.splice(index, 1);
     this._storeData(quotes);
