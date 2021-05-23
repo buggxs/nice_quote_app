@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Alert, StyleSheet, Platform, SafeAreaView, View, Text, Button } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Platform, SafeAreaView, View, Text, Button } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 import Quote from './js/components/Quote';
@@ -11,7 +11,7 @@ const database = SQLite.openDatabase('quotes.db');
 
 
 export default class App extends Component {
-  state = { index: 0, showNewQuoteScreen: false, quotes: [] };
+  state = { index: 0, showNewQuoteScreen: false, quotes: [], isLoading: true };
 
 
   _loadData = async () => {
@@ -22,6 +22,7 @@ export default class App extends Component {
         (_, result) => this.setState({quotes: result.rows._array})
         )
     );
+    this.setState({isLoading: false})
   }
 
 
@@ -93,9 +94,6 @@ export default class App extends Component {
 
 
   componentDidMount() {
-    /*
-CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY NOT NULL, text TEXT, author TEXT);
-*/
     database.transaction(
       transaction => transaction.executeSql("CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY NOT NULL, text TEXT, author TEXT);")
     );
@@ -104,6 +102,12 @@ CREATE TABLE IF NOT EXISTS quotes (id INTEGER PRIMARY KEY NOT NULL, text TEXT, a
 
 
   render() {
+    if(this.state.isLoading) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="blue" />
+        </View>)
+    }
     let { index, quotes } = this.state;
     const quote = quotes[index];
 
